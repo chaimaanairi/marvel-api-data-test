@@ -1,36 +1,45 @@
 import requests
-import hashlib
-import time
+import ssl
+from requests.adapters import HTTPAdapter
+from urllib3.poolmanager import PoolManager  # Fixed import for PoolManager
 
-# Your API keys
-public_key = '25dc2a8ba6477fd6faf4788a1d51f4f2'
-private_key = 'b7c49faadee8c8a9054ff34b2839ba9fddd2edeb'
+# Custom adapter to adjust SSL settings for requests
+class TLSAdapter(HTTPAdapter):
+    def init_poolmanager(self, *args, **kwargs):
+        context = ssl.create_default_context()
+        # Set the ciphers to allow less secure ciphers (use only if necessary)
+        context.set_ciphers('DEFAULT@SECLEVEL=1')
+        kwargs['ssl_context'] = context
+        return super().init_poolmanager(*args, **kwargs)
 
-# Generate hash
-timestamp = str(int(time.time()))
-hash_value = hashlib.md5(f"{timestamp}{private_key}{public_key}".encode('utf-8')).hexdigest()
 
-# Marvel API endpoint for characters
+# URL and parameters for the Marvel API request
 url = "https://gateway.marvel.com/v1/public/characters"
-
-# Parameters for the API request
 params = {
-    'ts': timestamp,
-    'apikey': public_key,
-    'hash': hash_value
+    'ts': '1731450075',
+    'apikey': '25dc2a8ba6477fd6faf4788a1d51f4f2',
+    'hash': '7ebc04237cc5e7ceaf4c9bdafa9a9539'
+}
+headers = {
+    'User-Agent': 'Mozilla/5.0'
 }
 
-# Make the request to the Marvel API
-response = requests.get(url, params=params)
+# Create a session to reuse the TLSAdapter settings for multiple requests
+session = requests.Session()
+session.mount('https://', TLSAdapter())  # Use custom adapter for HTTPS requests
 
-# Check if the request was successful
-if response.status_code == 200:
-    data = response.json()
+# Make the GET request and handle possible errors
+try:
+    # Send the GET request with parameters and headers
+    response = session.get(url, params=params, headers=headers)
+    response.raise_for_status()  # Raises an HTTPError for bad HTTP responses (4xx and 5xx)
 
-    # Process and print character names and the number of comics they appear in
-    for character in data['data']['results']:
-        character_name = character['name']
-        comics_count = len(character['comics']['items'])
-        print(f"Character: {character_name}, Appears in {comics_count} comics")
-else:
-    print(f"Failed to retrieve data: {response.status_code}")
+    # If the request was successful, print the JSON response
+    print(response.json())
+
+except requests.exceptions.SSLError as e:
+    print(f"SSL Error encountered: {e}")
+except requests.exceptions.RequestException as e:
+    print(f"HTTP Error encountered: {e}")
+except Exception as e:
+    print(f"An unexpected error occurred: {e}")
