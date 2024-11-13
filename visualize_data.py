@@ -9,11 +9,11 @@ top_characters = data.sort_values(by="Comic Count", ascending=False).head(10)
 
 # Plot
 plt.figure(figsize=(12, 8))
-plt.barh(top_characters["Character Name"], top_characters["Comic Count"], color="skyblue")
-plt.xlabel("Number of Comics")
-plt.ylabel("Character Name")
+plt.bar(top_characters["Character Name"], top_characters["Comic Count"], color="skyblue")
+plt.xticks(rotation=45, ha="right")  # Rotate x-axis labels for better readability
+plt.xlabel("Character Name")         # x-axis label
+plt.ylabel("Comic Count")            # y-axis label
 plt.title("Top 10 Marvel Characters by Comic Appearances")
-plt.gca().invert_yaxis()  # Reverse the order for better readability
 
 # Show plot
 plt.tight_layout()
