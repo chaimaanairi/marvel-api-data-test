@@ -12,7 +12,7 @@ The project uses the **Marvel API** to gather data on Marvel characters and the 
 ## Project Structure
 
 - `generate_hash.py`: Generates the required hash and timestamp for API authentication.
-- `fetch_characters.py`: Fetches character data (names and comic counts) from the Marvel API and saves it to a CSV file.
+- `fetch_characters.py`: Fetches character data (names and comic counts) from the Marvel API, sorted alphabetically by character name, and saves it to a CSV file.
 - `visualize_data.py`: Reads the CSV file and visualizes the data with a bar chart using `matplotlib`.
 - `marvel_characters.csv`: The output CSV file containing the character names and comic counts.
 
@@ -41,7 +41,7 @@ python generate_hash.py
 ```
 
 ### 3. Fetch Character Data
-Run `fetch_characters.py` to retrieve character names and comic counts from the Marvel API and save them to `marvel_characters.csv`.
+Run `fetch_characters.py` to retrieve character names and comic counts from the Marvel API, sorted alphabetically by character name, and save them to `marvel_characters.csv`.
 ```bash
 python fetch_characters.py
 ```
