@@ -19,7 +19,7 @@ The project uses the **Marvel API** to gather data on Marvel characters and the 
 ## Requirements
 
 To set up and run this project, you will need:
-- Python 3.x
+- Python 3.x  (I am using Python 3.10.8)
 - An API key from Marvel's Developer Portal: [https://developer.marvel.com](https://developer.marvel.com)
 - Python packages: `requests`, `pandas`, `matplotlib`
 
