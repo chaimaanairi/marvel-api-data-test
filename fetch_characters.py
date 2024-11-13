@@ -3,8 +3,8 @@ import requests
 import ssl
 import csv
 from requests.adapters import HTTPAdapter
-from urllib3.poolmanager import PoolManager
 from generate_hash import generate_hash  # Import the hash generation function
+
 
 # Custom adapter to adjust SSL settings for requests
 class TLSAdapter(HTTPAdapter):
@@ -14,12 +14,14 @@ class TLSAdapter(HTTPAdapter):
         kwargs['ssl_context'] = context
         return super().init_poolmanager(*args, **kwargs)
 
+
 # Marvel API details
 public_key = '25dc2a8ba6477fd6faf4788a1d51f4f2'  # Replace with actual key or load from environment
 url = "https://gateway.marvel.com/v1/public/characters"
 
 # Generate timestamp and hash
 ts, hash_value = generate_hash()
+
 
 # Function to fetch Marvel character data
 def fetch_character_data(limit=100):
@@ -48,16 +50,25 @@ def fetch_character_data(limit=100):
         print(f"An unexpected error occurred: {e}")
     return None
 
+
 # Function to save data to CSV
 def save_data_to_csv(data, filename='marvel_characters.csv'):
+    characters = data['data']['results']
+
+    # Sort characters by name
+    sorted_characters = sorted(characters, key=lambda x: x['name'])
+
     with open(filename, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(['Character Name', 'Comic Count'])
-        for character in data['data']['results']:
+
+        for character in sorted_characters:
             name = character['name']
             comics_count = character['comics']['available']
             writer.writerow([name, comics_count])
+
     print(f"Data saved to {filename}")
+
 
 # Main script execution
 if __name__ == "__main__":
