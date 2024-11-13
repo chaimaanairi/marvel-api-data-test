@@ -1,45 +1,66 @@
+import os
 import requests
 import ssl
+import csv
 from requests.adapters import HTTPAdapter
-from urllib3.poolmanager import PoolManager  # Fixed import for PoolManager
+from urllib3.poolmanager import PoolManager
+from generate_hash import generate_hash  # Import the hash generation function
 
 # Custom adapter to adjust SSL settings for requests
 class TLSAdapter(HTTPAdapter):
     def init_poolmanager(self, *args, **kwargs):
         context = ssl.create_default_context()
-        # Set the ciphers to allow less secure ciphers (use only if necessary)
         context.set_ciphers('DEFAULT@SECLEVEL=1')
         kwargs['ssl_context'] = context
         return super().init_poolmanager(*args, **kwargs)
 
-
-# URL and parameters for the Marvel API request
+# Marvel API details
+public_key = '25dc2a8ba6477fd6faf4788a1d51f4f2'  # Replace with actual key or load from environment
 url = "https://gateway.marvel.com/v1/public/characters"
-params = {
-    'ts': '1731450075',
-    'apikey': '25dc2a8ba6477fd6faf4788a1d51f4f2',
-    'hash': '7ebc04237cc5e7ceaf4c9bdafa9a9539'
-}
-headers = {
-    'User-Agent': 'Mozilla/5.0'
-}
 
-# Create a session to reuse the TLSAdapter settings for multiple requests
-session = requests.Session()
-session.mount('https://', TLSAdapter())  # Use custom adapter for HTTPS requests
+# Generate timestamp and hash
+ts, hash_value = generate_hash()
 
-# Make the GET request and handle possible errors
-try:
-    # Send the GET request with parameters and headers
-    response = session.get(url, params=params, headers=headers)
-    response.raise_for_status()  # Raises an HTTPError for bad HTTP responses (4xx and 5xx)
+# Function to fetch Marvel character data
+def fetch_character_data(limit=100):
+    params = {
+        'ts': ts,
+        'apikey': public_key,
+        'hash': hash_value,
+        'limit': limit
+    }
+    headers = {'User-Agent': 'Mozilla/5.0'}
 
-    # If the request was successful, print the JSON response
-    print(response.json())
+    # Create a session to reuse TLSAdapter settings for HTTPS requests
+    session = requests.Session()
+    session.mount('https://', TLSAdapter())
 
-except requests.exceptions.SSLError as e:
-    print(f"SSL Error encountered: {e}")
-except requests.exceptions.RequestException as e:
-    print(f"HTTP Error encountered: {e}")
-except Exception as e:
-    print(f"An unexpected error occurred: {e}")
+    try:
+        response = session.get(url, params=params, headers=headers)
+        response.raise_for_status()  # Raises an HTTPError for bad responses (4xx and 5xx)
+        return response.json()
+
+    except requests.exceptions.SSLError as e:
+        print(f"SSL Error encountered: {e}")
+    except requests.exceptions.RequestException as e:
+        print(f"HTTP Error encountered: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+    return None
+
+# Function to save data to CSV
+def save_data_to_csv(data, filename='marvel_characters.csv'):
+    with open(filename, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(['Character Name', 'Comic Count'])
+        for character in data['data']['results']:
+            name = character['name']
+            comics_count = character['comics']['available']
+            writer.writerow([name, comics_count])
+    print(f"Data saved to {filename}")
+
+# Main script execution
+if __name__ == "__main__":
+    data = fetch_character_data()
+    if data:
+        save_data_to_csv(data)
